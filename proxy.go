@@ -49,6 +49,9 @@ type NatsProxy struct {
 	requestPool  RequestPool
 	responsePool ResponsePool
 	prefix       string
+	allowOrigin  string
+	allowHeaders string
+	allowMethods string
 }
 
 type hookGroup struct {
@@ -59,10 +62,6 @@ type hookGroup struct {
 // NewNatsProxy creates an
 // initialized NatsProxy
 func NewNatsProxy(conn *nats.Conn) (*NatsProxy, error) {
-	return NewNatsProxyWithPrefix(conn, "")
-}
-
-func NewNatsProxyWithPrefix(conn *nats.Conn, prefix string) (*NatsProxy, error) {
 	if err := testConnection(conn); err != nil {
 		return nil, err
 	}
@@ -75,11 +74,45 @@ func NewNatsProxyWithPrefix(conn *nats.Conn, prefix string) (*NatsProxy, error) 
 		},
 		NewRequestPool(),
 		NewResponsePool(),
-		prefix,
+		"",
+		"*",
+		"*",
+		"POST, GET",
 	}, nil
 }
 
+func (np *NatsProxy) WithPrefix(prefix string) *NatsProxy {
+	np.prefix = prefix
+	return np
+}
+
+func (np *NatsProxy) WithAlowOrigin(allowOrigin string) *NatsProxy {
+	np.allowOrigin = allowOrigin
+	return np
+}
+
+func (np *NatsProxy) WithAllowMethods(allowMethods string) *NatsProxy {
+	np.allowMethods = allowMethods
+	return np
+}
+
+func (np *NatsProxy) WithAllowHeaders(allowHeaders string) *NatsProxy {
+	np.allowHeaders = allowHeaders
+	return np
+}
+
+func (np *NatsProxy) setPreflightHeaders(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", np.allowOrigin)
+	w.Header().Add("Access-Control-Allow-Methods", np.allowMethods)
+	w.Header().Add("Access-Control-Allow-Headers", np.allowHeaders)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (np *NatsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if req.Method == "OPTIONS" {
+		np.setPreflightHeaders(rw)
+		return
+	}
 
 	// Transform the HTTP request to
 	// NATS proxy request.
@@ -100,8 +133,9 @@ func (np *NatsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Post request to message queue
+	subj := URLToNats(np.prefix, req.Method, req.URL.Path)
 	msg, respErr := np.conn.Request(
-		URLToNats(np.prefix, req.Method, req.URL.Path),
+		subj,
 		reqBytes,
 		10*time.Second)
 	if respErr != nil {

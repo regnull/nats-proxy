@@ -26,12 +26,16 @@ const (
 // URLToNats builds the channel name
 // from an URL and Method of http.Request
 func URLToNats(prefix string, method string, urlPath string) string {
-	subURL := strings.Replace(urlPath, "/", ".", -1)
-	if prefix != "" {
-		subURL = prefix + ":" + method + ":" + subURL
-	} else {
-		subURL = method + ":" + subURL
+	subURL := prefix
+	if subURL != "" {
+		subURL += "."
 	}
+	subURL += method
+	if urlPath == "/" {
+		subURL += ".__root__"
+		return subURL
+	}
+	subURL += "." + strings.Replace(urlPath, "/", ".", -1)
 	return subURL
 }
 
