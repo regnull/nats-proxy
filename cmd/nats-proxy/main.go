@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -12,7 +13,7 @@ import (
 )
 
 const (
-	defaultHost             = "localhost"
+	defaultHost             = ""
 	defaultPort             = 8080
 	defaultHumanReadableLog = false
 	defaultLogLevel         = "info"
@@ -77,5 +78,5 @@ func main() {
 		WithAllowHeaders(args.AllowHeaders)
 
 	defer conn.Close()
-	http.ListenAndServe(":8080", proxy)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", args.Host, args.Port), proxy)
 }
