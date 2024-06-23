@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/nats.go"
 )
 
 func TestUrlReplace(t *testing.T) {

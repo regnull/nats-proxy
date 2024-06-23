@@ -10,7 +10,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/nats.go"
 )
 
 var (

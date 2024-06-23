@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/nats.go"
 )
 
 const (
