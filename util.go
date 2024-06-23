@@ -35,19 +35,25 @@ func URLToNats(prefix string, method string, urlPath string) string {
 		subURL += ".__root__"
 		return subURL
 	}
-	subURL += "." + strings.Replace(urlPath, "/", ".", -1)
+	urlPart := strings.Replace(urlPath, "/", ".", -1)
+	if urlPart[0] == '.' {
+		urlPart = urlPart[1:]
+	}
+	subURL += "." + urlPart
 	return subURL
 }
 
 // SubscribeURLToNats buils the subscription
 // channel name with placeholders (started with ":").
 // The placeholders are than used to obtain path variables
-func SubscribeURLToNats(method string, urlPath string) string {
-	subURL := pathrgxp.ReplaceAllString(urlPath, "*")
-	// subURL = lastpathrgxp.ReplaceAllString(subURL, ".*")
-	subURL = strings.Replace(subURL, "/", ".", -1)
-	subURL = fmt.Sprintf("%s:%s", method, subURL)
-	return subURL
+func SubscribeURLToNats(prefix string, method string, urlPath string) string {
+	return URLToNats(prefix, method, urlPath)
+
+	// subURL := pathrgxp.ReplaceAllString(urlPath, "*")
+	// // subURL = lastpathrgxp.ReplaceAllString(subURL, ".*")
+	// subURL = strings.Replace(subURL, "/", ".", -1)
+	// subURL = fmt.Sprintf("%s:%s", method, subURL)
+	// return subURL
 }
 
 // copy the values into protocol buffer

@@ -48,6 +48,7 @@ type NatsClient struct {
 	filters NatsHandlers
 	reqPool RequestPool
 	resPool ResponsePool
+	prefix  string
 }
 
 // NewNatsClient creates new NATS client
@@ -63,7 +64,13 @@ func NewNatsClient(conn *nats.Conn) (*NatsClient, error) {
 		make([]NatsHandler, 0),
 		NewRequestPool(),
 		NewResponsePool(),
+		"",
 	}, nil
+}
+
+func (nc *NatsClient) WithPrefix(prefix string) *NatsClient {
+	nc.prefix = prefix
+	return nc
 }
 
 // Use will add the middleware NatsHandler
@@ -100,7 +107,7 @@ func (nc *NatsClient) DELETE(url string, handler NatsHandler) {
 // for any http method. It also
 // wraps the processing of the context.
 func (nc *NatsClient) Subscribe(method, url string, handler NatsHandler) {
-	subscribeURL := SubscribeURLToNats(method, url)
+	subscribeURL := SubscribeURLToNats(nc.prefix, method, url)
 	paramMap := buildParamMap(url)
 	nc.conn.Subscribe(subscribeURL, func(m *nats.Msg) {
 		request := nc.reqPool.GetRequest()
@@ -175,7 +182,7 @@ func (nc *NatsClient) SendPUT(url string, req *Request) (response *Response, err
 }
 
 func (nc *NatsClient) Send(method string, url string, req *Request) (response *Response, err error) {
-	subject := SubscribeURLToNats(method, url)
+	subject := SubscribeURLToNats(nc.prefix, method, url)
 	response, err = nc.requestResponse(subject, req)
 	return
 }
