@@ -48,6 +48,7 @@ type NatsProxy struct {
 	wsMapper     *webSocketMapper
 	requestPool  RequestPool
 	responsePool ResponsePool
+	prefix       string
 }
 
 type hookGroup struct {
@@ -58,6 +59,10 @@ type hookGroup struct {
 // NewNatsProxy creates an
 // initialized NatsProxy
 func NewNatsProxy(conn *nats.Conn) (*NatsProxy, error) {
+	return NewNatsProxyWithPrefix(conn, "")
+}
+
+func NewNatsProxyWithPrefix(conn *nats.Conn, prefix string) (*NatsProxy, error) {
 	if err := testConnection(conn); err != nil {
 		return nil, err
 	}
@@ -70,6 +75,7 @@ func NewNatsProxy(conn *nats.Conn) (*NatsProxy, error) {
 		},
 		NewRequestPool(),
 		NewResponsePool(),
+		prefix,
 	}, nil
 }
 
@@ -95,7 +101,7 @@ func (np *NatsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Post request to message queue
 	msg, respErr := np.conn.Request(
-		URLToNats(req.Method, req.URL.Path),
+		URLToNats(np.prefix, req.Method, req.URL.Path),
 		reqBytes,
 		10*time.Second)
 	if respErr != nil {

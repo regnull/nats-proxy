@@ -25,9 +25,13 @@ const (
 
 // URLToNats builds the channel name
 // from an URL and Method of http.Request
-func URLToNats(method string, urlPath string) string {
+func URLToNats(prefix string, method string, urlPath string) string {
 	subURL := strings.Replace(urlPath, "/", ".", -1)
-	subURL = fmt.Sprintf("%s:%s", method, subURL)
+	if prefix != "" {
+		subURL = prefix + ":" + method + ":" + subURL
+	} else {
+		subURL = method + ":" + subURL
+	}
 	return subURL
 }
 
